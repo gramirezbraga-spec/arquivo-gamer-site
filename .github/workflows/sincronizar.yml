@@ -59,5 +59,3 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@v4
         if: steps.salvar.outputs.mudou == 'true' || github.event_name != 'schedule'
-        with:
-          timeout: 1800000   # 30 min: as vezes o GitHub Pages demora para processar os videos
