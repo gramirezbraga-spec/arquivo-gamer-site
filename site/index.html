@@ -75,6 +75,9 @@ details summary{cursor:pointer;font-weight:700;color:var(--azul);padding:4px 0}
 .dia.hoje{border-color:var(--amarelo)}
 .dia.prox1{border:2px solid var(--azul);box-shadow:0 0 20px rgba(0,229,255,.3)}
 .it{display:flex;flex-direction:column;flex:1;position:relative}
+.xf{font-size:11px;font-weight:800;letter-spacing:.05em;border-radius:6px;padding:1px 7px;background:rgba(150,110,255,.2);color:var(--texto,#fff)}
+.xl{font-size:11px;color:var(--mudo)}
+.it.ex .dmain{cursor:default}.it.ex .dmain:hover{background:none}
 .dia.multi{min-height:0}
 .dia.multi .it+.it{border-top:1px dashed var(--borda)}
 .dia.multi .jg{-webkit-line-clamp:2}
@@ -193,7 +196,7 @@ footer{margin-top:34px;color:var(--mudo);font-size:12px;border-top:1px solid var
 <script>
 (function(){
 "use strict";
-var D=window.AG_DADOS||{itens:[],config:{modo:"dm",url:""},perfil:"https://www.instagram.com/arqui.vogamer/",bio:""}, IT=D.itens, CFG=D.config;
+var D=window.AG_DADOS||{itens:[],config:{modo:"dm",url:""},perfil:"https://www.instagram.com/arqui.vogamer/",bio:""}, IT=D.itens, CFG=D.config, EX=D.extras||[];
 function igUrl(u){return /^https:\/\/(www\.)?instagram\.com\//.test(u||"")?u:"";}
 var $=function(i){return document.getElementById(i);};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
@@ -270,9 +273,16 @@ function irParaArquivo(id){
 
 /* calendario */
 /* um dia pode ter mais de um arquivo (ex.: #004 e #005 em 04/11): a celula empilha todos */
-function celula(arr){
- var cls="dia"+(arr.length>1?" multi":"")+(arr[0].data===HOJE?" hoje":"")+(arr.some(function(x){return proximo&&proximo.id===x.id;})?" prox1":"");
- return '<div class="'+cls+'">'+arr.map(function(x,i){return bloco(x,i===0);}).join("")+"</div>";
+function blocoExtra(x,primeiro){
+ var d=parse(x.data);
+ return '<div class="it ex"><div class="dmain">'+'<span class="dn">'+(primeiro?'<b class="n">'+d.getDate()+"</b> ":"")+'<span class="so-mobile">'+DIA3[d.getDay()]+" · "+d.getDate()+" "+MES3[d.getMonth()]+"</span></span>"+
+  '<span class="xf">'+esc(x.formato)+'</span><span class="jg">'+esc(x.tema)+"</span>"+(x.liga?'<span class="xl">liga com '+esc(x.liga)+"</span>":"")+"</div></div>";
+}
+function celula(arr,exs){
+ exs=exs||[];arr=arr||[];
+ var n=arr.length+exs.length,dt=(arr[0]||exs[0]).data;
+ var cls="dia"+(n>1?" multi":"")+(dt===HOJE?" hoje":"")+(arr.some(function(x){return proximo&&proximo.id===x.id;})?" prox1":"");
+ return '<div class="'+cls+'">'+arr.map(function(x,i){return bloco(x,i===0);}).join("")+exs.map(function(x,i){return blocoExtra(x,arr.length===0&&i===0);}).join("")+"</div>";
 }
 function bloco(it,primeiro){
  var d=parse(it.data);
@@ -283,17 +293,17 @@ function bloco(it,primeiro){
   '<span class="nm tit">#'+esc(it.num)+'</span><span class="jg">'+esc(it.jogo)+'</span><span class="st '+(it.postado?"ok":"")+'">'+(it.postado?"✓ NO AR":"EM BREVE")+"</span></button></div>";
 }
 function renderCal(){
- var dat=IT.filter(function(i){return i.data;}),sem=IT.filter(function(i){return !i.data;}),h="";
+ var dat=IT.filter(function(i){return i.data;}).concat(EX),sem=IT.filter(function(i){return !i.data;}),h="";
  if(sem.length)h+='<p class="cont">Fora do calendário: '+sem.map(function(it){return '<button class="chip" type="button" data-dia="'+it.id+'">#'+esc(it.num)+" "+esc(it.jogo)+(it.postado?" ✓":"")+"</button>";}).join(" ")+"</p>";
  if(!dat.length){$("cal").innerHTML=h+'<div class="vazia">Calendário em breve.</div>';return;}
  var min=parse(dat.reduce(function(a,b){return a.data<b.data?a:b;}).data),max=parse(dat.reduce(function(a,b){return a.data>b.data?a:b;}).data);
  var ini=new Date(min);ini.setDate(ini.getDate()-((ini.getDay()+6)%7));
  var fim=new Date(max);fim.setDate(fim.getDate()+(6-((fim.getDay()+6)%7)));
- var por={};dat.forEach(function(i){(por[i.data]=por[i.data]||[]).push(i);});
+ var por={},pex={};IT.forEach(function(i){if(i.data)(por[i.data]=por[i.data]||[]).push(i);});EX.forEach(function(x){(pex[x.data]=pex[x.data]||[]).push(x);});
  h+='<div class="dsem">'+["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(function(x){return "<div>"+x+"</div>";}).join("")+'</div><div class="grade">';
  for(var d=new Date(ini);d<=fim;d.setDate(d.getDate()+1)){
-  var it=por[iso(d)];
-  h+=it?celula(it):'<div class="dia vazio" aria-hidden="true">'+d.getDate()+(d.getDate()===1?" "+MES3[d.getMonth()]:"")+"</div>";
+  var it=por[iso(d)],xs=pex[iso(d)];
+  h+=(it||xs)?celula(it,xs):'<div class="dia vazio" aria-hidden="true">'+d.getDate()+(d.getDate()===1?" "+MES3[d.getMonth()]:"")+"</div>";
  }
  $("cal").innerHTML=h+"</div>";
 }
