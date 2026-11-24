@@ -33,6 +33,7 @@ jobs:
       - name: Buscar posts novos no Instagram
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
         run: python sincronizar_instagram.py
 
       - name: Salvar o que mudou
