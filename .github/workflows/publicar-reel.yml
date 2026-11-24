@@ -37,7 +37,8 @@ jobs:
           python-version: "3.12"
       - name: Ensaio ou publicacao
         env:
-          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          # Segredo proprio para publicar (nao mexe no IG_TOKEN do robo do site).
+          IG_TOKEN: ${{ secrets.IG_TOKEN_PUBLICAR || secrets.IG_TOKEN }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           VIDEO: ${{ inputs.video }}
           LEGENDA: ${{ inputs.legenda }}
