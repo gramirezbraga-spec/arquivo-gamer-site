@@ -37,8 +37,12 @@ try:
 except Exception:
     pass
 
-BASE = os.environ.get("IG_API_BASE", "https://graph.instagram.com").rstrip("/")
-VERSAO = os.environ.get("IG_API_VERSION", "").strip("/")
+# Dois jeitos de conectar:
+#  - token do "login do Instagram" (vale ~60 dias): so IG_TOKEN, usa graph.instagram.com
+#  - token de "usuario do sistema" (login unificado, nao vence): IG_TOKEN + IG_USER_ID, usa graph.facebook.com
+IG_USER_ID = os.environ.get("IG_USER_ID", "").strip()
+BASE = os.environ.get("IG_API_BASE", "https://graph.facebook.com" if IG_USER_ID else "https://graph.instagram.com").rstrip("/")
+VERSAO = os.environ.get("IG_API_VERSION", "v23.0" if IG_USER_ID else "").strip("/")
 CAMPOS = "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp"
 LOCAL = BASE.startswith("http://127.0.0.1") or BASE.startswith("http://localhost")  # so para testes
 MAX_VIDEO_MB = 200
@@ -191,7 +195,7 @@ def grava_dados(arq, dados):
 
 
 def posts_do_instagram(token, paginas):
-    url = url_api("me/media", fields=CAMPOS, limit=25, access_token=token)
+    url = url_api("%s/media" % (IG_USER_ID or "me"), fields=CAMPOS, limit=25, access_token=token)
     posts = []
     for _ in range(paginas):
         d = api_json(url)
@@ -211,6 +215,9 @@ def saida_github(**kv):
 
 
 def renovar(token):
+    if IG_USER_ID:
+        print("Token de usuario do sistema nao vence: nao precisa renovar.")
+        return
     d = api_json(url_api("refresh_access_token", grant_type="ig_refresh_token", access_token=token))
     print("Token renovado. Vale por mais %d dias." % round(int(d.get("expires_in", 0)) / 86400))
     print("Troque o segredo IG_TOKEN no GitHub por este valor (nao compartilhe):")
