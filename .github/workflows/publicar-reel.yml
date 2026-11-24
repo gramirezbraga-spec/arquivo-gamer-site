@@ -38,6 +38,7 @@ jobs:
       - name: Ensaio ou publicacao
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
           VIDEO: ${{ inputs.video }}
           LEGENDA: ${{ inputs.legenda }}
           CONFIRMAR: ${{ inputs.confirmar }}
