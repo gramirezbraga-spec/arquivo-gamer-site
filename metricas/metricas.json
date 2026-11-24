@@ -1,0 +1,27 @@
+{
+ "conta": [
+  {
+   "data": "2026-11-24",
+   "seguidores": 21,
+   "posts": 18
+  }
+ ],
+ "reels": {
+  "18121443173008068": {
+   "arquivo": "013",
+   "jogo": "Resident Evil",
+   "historico": [
+    {
+     "reach": 19,
+     "views": 31,
+     "saved": 0,
+     "shares": 0,
+     "likes": 1,
+     "comments": 0,
+     "data": "2026-11-24",
+     "envios_por_alcance": 0.0
+    }
+   ]
+  }
+ }
+}
