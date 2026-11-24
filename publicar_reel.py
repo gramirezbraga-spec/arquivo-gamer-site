@@ -6,6 +6,10 @@
         -> posta de verdade.
 
 O token vem so da variavel IG_TOKEN e nunca e impresso.
+Dois tipos de token (igual ao sincronizar_instagram.py):
+  - comeca com "IG"  -> login do Instagram (graph.instagram.com), permissao instagram_business_content_publish
+  - outro (ex. "EAA") -> login com Facebook (graph.facebook.com), precisa de IG_USER_ID e da
+                         permissao instagram_content_publish (conta ligada a uma Pagina do Facebook)
 O video precisa estar num link publico (o site no GitHub Pages serve: /publicar/...).
 Usa so a biblioteca padrao do Python.
 """
@@ -20,7 +24,12 @@ import urllib.request
 from pathlib import Path
 
 BASE_SITE = os.environ.get("SITE_URL", "https://gramirezbraga-spec.github.io/arquivo-gamer-site").rstrip("/")
-API = "https://graph.instagram.com/v23.0"
+IG_USER_ID = os.environ.get("IG_USER_ID", "").strip()
+_TOKEN_IG = os.environ.get("IG_TOKEN", "").strip().startswith("IG")
+USA_FACEBOOK = bool(IG_USER_ID) and not _TOKEN_IG
+API = "https://graph.facebook.com/v23.0" if USA_FACEBOOK else "https://graph.instagram.com/v23.0"
+CONTA = IG_USER_ID if USA_FACEBOOK else "me"
+PERMISSAO = "instagram_content_publish" if USA_FACEBOOK else "instagram_business_content_publish"
 
 
 def chamada(metodo, caminho, token, **params):
@@ -42,7 +51,7 @@ def chamada(metodo, caminho, token, **params):
         msg = err.get("message", "HTTP %s" % e.code)
         dica = ""
         if err.get("code") in (10, 200, 190) or "permission" in msg.lower():
-            dica = " -> Falta a permissao instagram_business_content_publish no token (gere um token novo marcando-a)."
+            dica = " -> Falta a permissao %s no token (gere um token novo marcando-a)." % PERMISSAO
         sys.exit("Erro do Instagram (codigo %s): %s%s" % (err.get("code"), msg, dica))
 
 
@@ -92,7 +101,7 @@ def main():
     if not token:
         sys.exit("IG_TOKEN nao configurado.")
     print("Confirmado. Criando o Reel...")
-    cont = chamada("POST", "me/media", token, media_type="REELS", video_url=url, caption=legenda)["id"]
+    cont = chamada("POST", CONTA + "/media", token, media_type="REELS", video_url=url, caption=legenda)["id"]
     for _ in range(12):  # ate ~6 min
         time.sleep(30)
         st = chamada("GET", cont, token, fields="status_code").get("status_code")
@@ -103,7 +112,7 @@ def main():
             sys.exit("O Instagram recusou o video (%s). Nada foi postado." % st)
     else:
         sys.exit("Demorou demais para processar. Nada foi postado; tente de novo.")
-    media = chamada("POST", "me/media_publish", token, creation_id=cont)["id"]
+    media = chamada("POST", CONTA + "/media_publish", token, creation_id=cont)["id"]
     info = chamada("GET", media, token, fields="permalink")
     print("POSTADO:", info.get("permalink", media))
 
