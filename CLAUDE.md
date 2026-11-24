@@ -17,5 +17,5 @@ Ao pedir ok, diga em linguagem simples: o que será feito, onde, e o que não d�
 - Os vídeos não podem parecer gerados por IA de forma óbvia: sempre passar pela skill `checar-sinais-de-ia`.
 
 ## Time
-orquestrador (porta de entrada) → roteirista, desenvolvedor, instagram, analista. Definições em `.claude/agents/`; habilidades em `.claude/skills/`.
+orquestrador (porta de entrada) → roteirista, editor-de-video, desenvolvedor, instagram, analista. Definições em `.claude/agents/`; habilidades em `.claude/skills/`.
 Roteiros e vídeos ficam nos arquivos do projeto (pasta arquivo-gamer/roteiros), não neste repositório.
