@@ -1,0 +1,51 @@
+name: Publicar Carrossel ou Story (com confirmacao)
+
+# Sozinho NAO posta nada. Ao clicar em "Run workflow":
+#  - deixando "confirmar" vazio  -> so um ENSAIO (mostra a legenda e confere os links)
+#  - escrevendo PUBLICAR         -> posta no Instagram
+on:
+  workflow_dispatch:
+    inputs:
+      tipo:
+        description: "O que postar"
+        type: choice
+        options: [carrossel, imagem, story]
+        default: carrossel
+      imagens:
+        description: "Imagens .jpg ja enviadas ao repositorio, na ordem, separadas por virgula. Ex.: site/publicar/bf/01.jpg,site/publicar/bf/02.jpg"
+        required: true
+      legenda:
+        description: "Legenda (.txt), ex.: site/publicar/bf/legenda.txt. Story nao usa legenda."
+        required: false
+        default: ""
+      confirmar:
+        description: "Escreva PUBLICAR para postar de verdade. Vazio = so ensaio."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publicar-reel
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    # Mesmo ambiente do Reel: exige o seu clique de aprovacao.
+    environment: instagram-publicar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ensaio ou publicacao
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN_PUBLICAR || secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          TIPO: ${{ inputs.tipo }}
+          IMAGENS: ${{ inputs.imagens }}
+          LEGENDA: ${{ inputs.legenda }}
+          CONFIRMAR: ${{ inputs.confirmar }}
+        run: python publicar_imagens.py --tipo "$TIPO" --imagens "$IMAGENS" --legenda "$LEGENDA" --confirmar "$CONFIRMAR"
