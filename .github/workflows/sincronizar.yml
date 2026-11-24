@@ -36,6 +36,17 @@ jobs:
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
         run: python sincronizar_instagram.py
 
+      # Numeros (seguidores, alcance...) ficam em metricas/, fora do site publico, e nao republicam o site.
+      - name: Salvar os numeros do dia
+        run: |
+          git config user.name "arquivo-gamer-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add metricas 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Guarda numeros do dia (seguidores e Reels)"
+            git push || (git pull --rebase && git push)
+          fi
+
       - name: Salvar o que mudou
         id: salvar
         run: |

@@ -16,6 +16,9 @@ O que faz:
        c) por um unico numero "Arquivo #NNN" em qualquer parte da legenda.
      Se nao tiver certeza, NAO publica nada e avisa no log.
   3. Baixa o video e a capa para site/videos e site/capas, grava a legenda postada e o link do post em site/dados.js.
+  4. Uma vez por dia, guarda os numeros da conta (seguidores) e de cada Reel (alcance, visualizacoes,
+     salvamentos, compartilhamentos, curtidas, comentarios) em metricas/metricas.json. Essa pasta NAO vai
+     para o site publico. Se o Instagram nao liberar os numeros, so avisa e segue (nunca falha por isso).
 Nunca apaga nada. O token so e lido da variavel de ambiente IG_TOKEN e nunca e impresso.
 
 Usa so a biblioteca padrao do Python (nada para instalar).
@@ -208,6 +211,76 @@ def posts_do_instagram(token, paginas):
     return posts
 
 
+METRICAS = ["reach", "views", "saved", "shares", "likes", "comments"]
+NOMES_METRICA = {"reach": "alcance", "views": "visualizacoes", "saved": "salvamentos",
+                 "shares": "compartilhamentos", "likes": "curtidas", "comments": "comentarios"}
+
+
+def numeros_do_reel(token, media_id):
+    """Pede os numeros de um Reel. Tenta a lista completa; se o Instagram recusar, tenta so as basicas."""
+    ultimo = None
+    for lista in (METRICAS, ["reach", "saved", "shares", "likes", "comments"], ["reach"]):
+        try:
+            d = api_json(url_api("%s/insights" % media_id, metric=",".join(lista), access_token=token))
+        except ApiErro as e:
+            ultimo = e
+            continue
+        out = {}
+        for m in d.get("data", []):
+            v = (m.get("values") or [{}])[0].get("value")
+            if m.get("name") in METRICAS and isinstance(v, (int, float)):
+                out[m["name"]] = v
+        if out:
+            return out, None
+    return {}, ultimo
+
+
+def coleta_metricas(token, posts, itens, pasta_metricas, dry_run):
+    """Guarda 1 retrato por dia: seguidores da conta e numeros de cada Reel. Nunca derruba a sincronia."""
+    hoje = time.strftime("%Y-%m-%d", time.gmtime())
+    arq = Path(pasta_metricas) / "metricas.json"
+    try:
+        base = json.loads(arq.read_text(encoding="utf-8")) if arq.exists() else {}
+    except Exception:
+        base = {}
+    base.setdefault("conta", [])
+    base.setdefault("reels", {})
+    if base["conta"] and base["conta"][-1].get("data") == hoje:
+        print("Metricas de hoje (%s) ja guardadas." % hoje)
+        return False
+    por_ig = {i["ig_id"]: i for i in itens if i.get("ig_id")}
+    reels = [p for p in posts if p.get("media_type") == "VIDEO" and p.get("id") in por_ig]
+    try:
+        quem = "%s" % (IG_USER_ID if USA_FACEBOOK else "me")
+        c = api_json(url_api(quem, fields="followers_count,media_count", access_token=token))
+        base["conta"].append({"data": hoje, "seguidores": c.get("followers_count"), "posts": c.get("media_count")})
+        print("Metricas: %s seguidores, %s posts na conta." % (c.get("followers_count"), c.get("media_count")))
+    except ApiErro as e:
+        print("Aviso: nao consegui ler os seguidores (%s). Pode faltar permissao no token." % e)
+        base["conta"].append({"data": hoje, "seguidores": None, "posts": None})
+    sem_acesso = 0
+    for p in reels:
+        it = por_ig[p["id"]]
+        nums, erro = numeros_do_reel(token, p["id"])
+        if not nums:
+            sem_acesso += 1
+            continue
+        r = base["reels"].setdefault(p["id"], {"arquivo": it["num"], "jogo": it.get("jogo"), "historico": []})
+        nums["data"] = hoje
+        if nums.get("reach"):
+            nums["envios_por_alcance"] = round(nums.get("shares", 0) / nums["reach"], 4)
+        r["historico"].append(nums)
+    if reels and sem_acesso == len(reels):
+        print("Aviso: o Instagram nao liberou os numeros dos Reels (provavel falta da permissao de insights no token).")
+    else:
+        print("Metricas guardadas para %d de %d Reels." % (len(reels) - sem_acesso, len(reels)))
+    if dry_run:
+        return False
+    arq.parent.mkdir(parents=True, exist_ok=True)
+    arq.write_text(json.dumps(base, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return True
+
+
 def saida_github(**kv):
     f = os.environ.get("GITHUB_OUTPUT")
     if f:
@@ -231,6 +304,8 @@ def main():
     ap.add_argument("--pasta", default=str(Path(__file__).resolve().parent / "site"), help="pasta do site (com dados.js)")
     ap.add_argument("--dry-run", action="store_true", help="nao baixa nem grava nada")
     ap.add_argument("--paginas", type=int, default=2, help="paginas de 25 posts a consultar (padrao 2)")
+    ap.add_argument("--pasta-metricas", default=str(Path(__file__).resolve().parent / "metricas"), help="pasta dos numeros (fora do site publico)")
+    ap.add_argument("--sem-metricas", action="store_true", help="nao guarda os numeros de hoje")
     ap.add_argument("--renovar-token", action="store_true")
     ap.add_argument("--exigir-token", action="store_true", help="falha se IG_TOKEN nao existir")
     a = ap.parse_args()
@@ -329,6 +404,11 @@ def main():
     elif not mudou:
         print("Nada novo para publicar.")
     saida_github(mudou="true" if mudou and not a.dry_run else "false")
+    if not a.sem_metricas:
+        try:
+            coleta_metricas(token, posts, itens, a.pasta_metricas, a.dry_run)
+        except Exception as e:  # numeros sao um extra: nunca derrubam a sincronia
+            print("Aviso: metricas puladas (%s)." % e.__class__.__name__)
 
 
 if __name__ == "__main__":
