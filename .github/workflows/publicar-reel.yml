@@ -1,0 +1,46 @@
+name: Publicar Reel (com confirmacao)
+
+# Sozinho NAO posta nada. Ao clicar em "Run workflow":
+#  - deixando "confirmar" vazio  -> so um ENSAIO (mostra video + legenda e confere o link)
+#  - escrevendo PUBLICAR         -> posta no Instagram
+on:
+  workflow_dispatch:
+    inputs:
+      video:
+        description: "Video, ex.: site/publicar/arquivo-007.mp4 (ja enviado ao repositorio)"
+        required: true
+      legenda:
+        description: "Legenda, ex.: site/publicar/arquivo-007.txt"
+        required: true
+      confirmar:
+        description: "Escreva PUBLICAR para postar de verdade. Vazio = so ensaio."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publicar-reel
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    # Trava extra opcional: crie o ambiente "instagram-publicar" em Settings > Environments
+    # com voce como revisor obrigatorio; o GitHub passa a pedir um clique de aprovacao.
+    environment: instagram-publicar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ensaio ou publicacao
+        env:
+          # Segredo proprio para publicar (nao mexe no IG_TOKEN do robo do site).
+          IG_TOKEN: ${{ secrets.IG_TOKEN_PUBLICAR || secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          VIDEO: ${{ inputs.video }}
+          LEGENDA: ${{ inputs.legenda }}
+          CONFIRMAR: ${{ inputs.confirmar }}
+        run: python publicar_reel.py --video "$VIDEO" --legenda "$LEGENDA" --confirmar "$CONFIRMAR"
