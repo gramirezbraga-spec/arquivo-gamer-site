@@ -1,6 +1,6 @@
 """Publica UM Reel no Instagram do Arquivo Gamer, so com confirmacao explicita.
 
-    python publicar_reel.py --video site/publicar/arquivo-007.mp4 --legenda site/publicar/arquivo-007.txt
+    python publicar_reel.py --video site/videos/arquivo-013.mp4 --legenda site/publicar/arquivo-013.txt
         -> ENSAIO (padrao): confere tudo e mostra a legenda. NAO posta nada.
     python publicar_reel.py ... --confirmar PUBLICAR
         -> posta de verdade.
@@ -10,7 +10,7 @@ Dois tipos de token (igual ao sincronizar_instagram.py):
   - comeca com "IG"  -> login do Instagram (graph.instagram.com), permissao instagram_business_content_publish
   - outro (ex. "EAA") -> login com Facebook (graph.facebook.com), precisa de IG_USER_ID e da
                          permissao instagram_content_publish (conta ligada a uma Pagina do Facebook)
-O video precisa estar num link publico (o site no GitHub Pages serve: /publicar/...).
+O video precisa estar num link publico (o site no GitHub Pages serve: /videos/... ou /publicar/...).
 Usa so a biblioteca padrao do Python.
 """
 import argparse
@@ -74,14 +74,14 @@ def confere_link(url):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--video", required=True, help="caminho do mp4 dentro de site/publicar/")
+    ap.add_argument("--video", required=True, help="caminho do mp4 dentro de site/videos/ ou site/publicar/")
     ap.add_argument("--legenda", required=True, help="arquivo .txt com a legenda")
     ap.add_argument("--confirmar", default="", help='digite exatamente PUBLICAR para postar de verdade')
     a = ap.parse_args()
 
     video = Path(a.video).as_posix()
-    if not video.startswith("site/publicar/") or not video.endswith(".mp4"):
-        sys.exit("O video precisa estar em site/publicar/ e ser .mp4")
+    if not (video.startswith("site/publicar/") or video.startswith("site/videos/")) or not video.endswith(".mp4") or ".." in video:
+        sys.exit("O video precisa estar em site/videos/ ou site/publicar/ e ser .mp4")
     legenda = Path(a.legenda).read_text(encoding="utf-8").strip()
     if not legenda or len(legenda) > 2200:
         sys.exit("Legenda vazia ou maior que 2200 caracteres (%d)." % len(legenda))
