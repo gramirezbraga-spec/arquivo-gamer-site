@@ -204,7 +204,7 @@ var HOJE=iso(new Date());
 var MES3=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 var DIA3=["dom","seg","ter","qua","qui","sex","sáb"];
 var porId={};IT.forEach(function(i){porId[i.id]=i;});
-var NOAR=IT.filter(function(i){return i.postado;}).sort(function(a,b){return b.id-a.id;});
+var NOAR=IT.filter(function(i){return i.postado;}).sort(function(a,b){return a.id-b.id;});
 var fut=IT.filter(function(i){return i.data&&i.data>=HOJE&&!i.postado;}).sort(function(a,b){return a.data<b.data?-1:1;});
 var proximo=fut[0]||null;
 function quando(it){var n=Math.round((parse(it.data)-parse(HOJE))/864e5);return n===0?"HOJE":n===1?"AMANHÃ":"EM "+n+" DIAS";}
