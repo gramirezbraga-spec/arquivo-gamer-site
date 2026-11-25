@@ -4,6 +4,11 @@
    "data": "2026-11-24",
    "seguidores": 21,
    "posts": 18
+  },
+  {
+   "data": "2026-11-25",
+   "seguidores": 24,
+   "posts": 18
   }
  ],
  "reels": {
@@ -19,6 +24,16 @@
      "likes": 1,
      "comments": 0,
      "data": "2026-11-24",
+     "envios_por_alcance": 0.0
+    },
+    {
+     "reach": 29,
+     "views": 42,
+     "saved": 0,
+     "shares": 0,
+     "likes": 2,
+     "comments": 0,
+     "data": "2026-11-25",
      "envios_por_alcance": 0.0
     }
    ]
