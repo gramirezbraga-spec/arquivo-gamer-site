@@ -14,6 +14,11 @@
    "data": "2026-11-26",
    "seguidores": 30,
    "posts": 18
+  },
+  {
+   "data": "2026-11-27",
+   "seguidores": 41,
+   "posts": 19
   }
  ],
  "reels": {
@@ -49,6 +54,32 @@
      "likes": 4,
      "comments": 1,
      "data": "2026-11-26",
+     "envios_por_alcance": 0.0
+    },
+    {
+     "reach": 44,
+     "views": 61,
+     "saved": 0,
+     "shares": 0,
+     "likes": 4,
+     "comments": 1,
+     "data": "2026-11-27",
+     "envios_por_alcance": 0.0
+    }
+   ]
+  },
+  "18126589945941749": {
+   "arquivo": "019",
+   "jogo": "Grand Theft Auto VI",
+   "historico": [
+    {
+     "reach": 147,
+     "views": 176,
+     "saved": 0,
+     "shares": 0,
+     "likes": 9,
+     "comments": 0,
+     "data": "2026-11-27",
      "envios_por_alcance": 0.0
     }
    ]
